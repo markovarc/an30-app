@@ -6,6 +6,41 @@ from openpyxl.styles import PatternFill, Font
 from openpyxl.utils import get_column_letter
 
 app = Flask(__name__)
+
+
+def init_db():
+    with sqlite3.connect("an30.db") as conn:
+        c = conn.cursor()
+        c.execute("PRAGMA foreign_keys = ON")
+        c.execute("""CREATE TABLE IF NOT EXISTS machines (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS drivers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS counterparties (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS records (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date DATE NOT NULL,
+            machine_id INTEGER NOT NULL,
+            driver_id INTEGER NOT NULL,
+            start_time TEXT,
+            end_time TEXT,
+            hours INTEGER DEFAULT 0,
+            comment TEXT,
+            counterparty_id INTEGER,
+            status TEXT NOT NULL CHECK(status IN ('work', 'stop', 'repair', 'holiday')),
+            FOREIGN KEY(machine_id) REFERENCES machines(id) ON DELETE CASCADE,
+            FOREIGN KEY(driver_id) REFERENCES drivers(id) ON DELETE CASCADE,
+            FOREIGN KEY(counterparty_id) REFERENCES counterparties(id) ON DELETE SET NULL
+        )""")
+        conn.commit()
+
 app.secret_key = 'supersecretkey123'
 app.config['DATABASE'] = 'an30.db'
 app.config['SQLITE_TIMEOUT'] = 20
